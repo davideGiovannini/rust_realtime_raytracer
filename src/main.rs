@@ -1,7 +1,8 @@
 extern crate sdl2;
+extern crate cgmath;
 
 mod renderer;
-
+mod data_structures;
 
 use sdl2::pixels::PixelFormatEnum;
 use sdl2::rect::Rect;
