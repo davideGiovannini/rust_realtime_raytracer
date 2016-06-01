@@ -1,23 +1,19 @@
 
 use cgmath::Vector3;
-
+use data_structures::geom::BoundingBox;
 
 #[derive(Debug)]
 pub struct VoxelData {
-    center: Vector3<f64>,
-    width: f64,
-    height: f64,
-    depth: f64,
+    pub bounding_box: BoundingBox,
+    pub color: u32,
 }
 
 #[allow(dead_code)]
 impl VoxelData {
-    fn new(center: Vector3<f64>, width: f64, height: f64, depth: f64) -> VoxelData {
+    pub fn new(center: Vector3<f64>, width: f64, height: f64, depth: f64, color: u32) -> VoxelData {
         VoxelData {
-            center: center,
-            width: width,
-            height: height,
-            depth: depth,
+            bounding_box: BoundingBox::new_from_center(center, width, height, depth),
+            color: color,
         }
     }
 }

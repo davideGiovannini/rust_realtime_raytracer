@@ -4,6 +4,10 @@ use cgmath::Vector3;
 
 pub type Vector = Vector3<f64>;
 
+pub fn zero3() -> Vector {
+    Vector::new(0.0, 0.0, 0.0)
+}
+
 
 #[derive(Debug, Clone, Copy)]
 pub struct BoundingBox {
@@ -131,6 +135,9 @@ impl Ray {
         self.sign_is_positive[0] = inv_dir.x.is_sign_positive();
         self.sign_is_positive[1] = inv_dir.y.is_sign_positive();
         self.sign_is_positive[2] = inv_dir.z.is_sign_positive();
+    }
+    pub fn get_origin(&self) -> Vector {
+        self.origin.clone()
     }
 }
 

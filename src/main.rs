@@ -13,6 +13,8 @@ use sdl2::pixels::Color::RGB;
 use std::time::Instant;
 
 use renderer::*;
+use data_structures::octree::Octree;
+use data_structures::voxel::VoxelData;
 use data_structures::geom::*;
 
 const WINDOW_TITLE: &'static str = "Voxel Experiments";
@@ -48,12 +50,16 @@ pub fn main() {
         for x in 0..WIDTH {
             let cx = (x as f64 / WIDTH as f64) * 8.0;
             let cy = (y as f64 / HEIGHT as f64) * 6.0;
-            ray_matrix[y].push(Ray::new(Vector::new(cx + 1.0, 2.0 + cy, -2.0),
+            ray_matrix[y].push(Ray::new(Vector::new(cx, cy + 1.0, -2.0),
                                         Vector::new(-0.3, -0.3, 0.3)));
         }
     }
-    let bbox = BoundingBox::new_from2points(Vector::new(0.0, 0.0, 0.0), Vector::new(1.0, 1.0, 1.0));
+    let mut octree = Octree::new(zero3(), 10.0);
 
+    octree.add_voxel(VoxelData::new(zero3(), 1.0, 1.0, 1.0, 0xFF_FF_FF_FF));
+    octree.add_voxel(VoxelData::new(Vector::new(2.0, 2.0, 0.0), 1.0, 2.0, 1.0, 0xFF_FF_A0_10));
+
+    octree.add_voxel(VoxelData::new(Vector::new(4.0, 1.0, 0.0), 0.5, 0.5, 0.5, 0xFF_F0_10_C0));
     // _DATA
 
 
@@ -73,7 +79,7 @@ pub fn main() {
         }
         // The rest of the game loop goes here...
 
-        raycaster_renderer.render_frame(&bbox, &ray_matrix);
+        raycaster_renderer.render_frame(&octree, &ray_matrix);
 
         frames += 1;
         if last_frame.elapsed().as_secs() > 0 {

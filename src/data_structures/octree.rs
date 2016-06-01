@@ -1,11 +1,12 @@
+
+
+use cgmath::InnerSpace;
 use data_structures::voxel::VoxelData;
 
-use data_structures::geom::{Vector, BoundingBox};
+use data_structures::geom::{Vector, BoundingBox, Ray};
 
-#[allow(dead_code)]
 const DEFAULT_BUCKET_SIZE: usize = 8;
 
-#[allow(dead_code)]
 #[derive(Debug)]
 pub struct Octree {
     bounding_box: BoundingBox,
@@ -15,7 +16,6 @@ pub struct Octree {
 }
 
 
-#[allow(dead_code)]
 impl Octree {
     pub fn new(center: Vector, scale: f64) -> Octree {
         Octree::new_with(center, scale, scale, scale, DEFAULT_BUCKET_SIZE)
@@ -44,15 +44,38 @@ impl Octree {
             if self.octants.is_none() {
                 self.grow()
             }
-
+            // TODO add in right octant, also clean up bucket ?
         }
+    }
 
+    pub fn raycast(&self, ray: &Ray, min_distance: f64, max_distance: f64) -> Option<&VoxelData> {
+        if self.bounding_box.intersect_ray(ray, min_distance, max_distance) {
+            let result = self.bucket
+                .iter()
+                .filter(|data| data.bounding_box.intersect_ray(ray, min_distance, max_distance))
+                .min_by_key(|data| {
+                    (data.bounding_box.center() - ray.get_origin()).magnitude2() as u32
+                });
+            if result.is_none() && self.octants.is_some() {
+                self.octants
+                    .as_ref()
+                    .unwrap()
+                    .iter()
+                    .filter_map(|octant| octant.raycast(ray, min_distance, max_distance))
+                    .min_by_key(|data| {
+                        (data.bounding_box.center() - ray.get_origin()).magnitude2() as u32
+                    })
+            } else {
+                return result;
+            }
+        } else {
+            None
+        }
     }
 }
 
 
 // Private functions
-#[allow(dead_code)]
 impl Octree {
     fn grow(&mut self) {
         assert!(self.octants.is_none());
