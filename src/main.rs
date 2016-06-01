@@ -6,8 +6,6 @@ extern crate libc;
 mod renderer;
 mod data_structures;
 
-use sdl2::pixels::PixelFormatEnum;
-use sdl2::rect::Rect;
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use sdl2::pixels::Color::RGB;
@@ -39,11 +37,8 @@ pub fn main() {
     println!("Initialized window at {},{}", WIDTH, HEIGHT);
 
 
-    let mut texture =
-        renderer.create_texture_streaming(PixelFormatEnum::ARGB8888, WIDTH as u32, HEIGHT as u32)
-            .unwrap();
+    let mut raycaster_renderer = RaycasterRenderer::new(&renderer);
 
-    let texture_update_function = render_pixels();
 
     // DATA
 
@@ -78,15 +73,7 @@ pub fn main() {
         }
         // The rest of the game loop goes here...
 
-        // texture.with_lock(None, texture_update_function.as_ref()).unwrap();
-        unsafe_render(&texture, &bbox, &ray_matrix);
-
-        renderer.clear();
-        renderer.copy(&texture,
-                      None,
-                      Some(Rect::new(0, 0, WIDTH as u32, HEIGHT as u32)));
-        renderer.present();
-
+        raycaster_renderer.render_frame(&bbox, &ray_matrix);
 
         frames += 1;
         if last_frame.elapsed().as_secs() > 0 {
@@ -94,7 +81,5 @@ pub fn main() {
             last_frame = Instant::now();
             frames = 0;
         }
-
-
     }
 }
