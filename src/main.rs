@@ -52,7 +52,7 @@ pub fn main() {
                                         Vector::new(-0.3, -0.3, 0.3)));
         }
     }
-    let bbox = BoundingBox::new(Vector::new(0.0, 0.0, 0.0), Vector::new(1.0, 1.0, 1.0));
+    let bbox = BoundingBox::new_from2points(Vector::new(0.0, 0.0, 0.0), Vector::new(1.0, 1.0, 1.0));
 
     // _DATA
 

@@ -12,11 +12,28 @@ pub struct BoundingBox {
 }
 
 impl BoundingBox {
-    pub fn new(min_point: Vector, max_point: Vector) -> BoundingBox {
+    pub fn new_from2points(min_point: Vector, max_point: Vector) -> BoundingBox {
         BoundingBox {
             min_point: min_point,
             max_point: max_point,
         }
+    }
+    pub fn new_from_center(center: Vector, width: f64, height: f64, depth: f64) -> BoundingBox {
+        let size = Vector::new(width / 2.0, height / 2.0, depth / 2.0);
+
+        BoundingBox {
+            min_point: center - size,
+            max_point: center + size,
+        }
+    }
+
+    pub fn center(&self) -> Vector {
+        let size = self.size() / 2.0;
+        self.min_point + size
+    }
+
+    pub fn size(&self) -> Vector {
+        self.max_point - self.min_point
     }
 
     pub fn intersect_ray(&self, ray: &Ray, min_distance: f64, max_distance: f64) -> bool {
@@ -133,7 +150,8 @@ mod test_raycasting {
                     Ray::new(Vector::new(0.0, 0.0, 2.0), Vector::new(0.0, 0.0, -1.0)),
                     Ray::new(Vector::new(1.0, 0.0, 0.0), Vector::new(-1.0, 0.0, 0.0)),
                     Ray::new(Vector::new(-1.0, 0.0, 0.0), Vector::new(1.0, 0.0, 0.0))];
-        let bbox = BoundingBox::new(Vector::new(-0.5, -0.5, -0.5), Vector::new(0.5, 0.5, 0.5));
+        let bbox = BoundingBox::new_from2points(Vector::new(-0.5, -0.5, -0.5),
+                                                Vector::new(0.5, 0.5, 0.5));
 
         for ray in rays.iter() {
             assert!(bbox.intersect_ray(ray, 0.0, 100.0))
@@ -144,10 +162,12 @@ mod test_raycasting {
     fn test_raycast_miss() {
         let rays = [Ray::new(Vector::new(0.0, 0.0, -3.0), Vector::new(0.0, 0.0, 1.0)),
                     Ray::new(Vector::new(-3.0, 0.0, 0.0), Vector::new(1.0, 0.0, 0.0))];
-        let bbox = BoundingBox::new(Vector::new(-0.5, -0.5, -0.5), Vector::new(0.5, 0.5, 0.5));
-
+        let bbox = BoundingBox::new_from2points(Vector::new(-0.5, -0.5, -0.5),
+                                                Vector::new(0.5, 0.5, 0.5));
+        let bbox2 = BoundingBox::new_from_center(Vector::new(0.0, 0.0, 0.0), 1.0, 1.0, 1.0);
         for ray in rays.iter() {
-            assert!(bbox.intersect_ray(ray, 0.0, 100.0))
+            assert!(bbox.intersect_ray(ray, 0.0, 100.0));
+            assert!(bbox2.intersect_ray(ray, 0.0, 100.0))
         }
     }
 }
