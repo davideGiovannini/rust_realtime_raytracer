@@ -39,7 +39,33 @@ impl Octree {
             bucket: Vec::with_capacity(bucket_size),
         }
     }
+
+    pub fn add_voxel(&mut self, voxel: VoxelData) {
+        // TODO do nothing if outside of bounding box
+        if self.bucket.len() < self.bucket.capacity() {
+            self.bucket.push(voxel);
+            return;
+        } else {
+            if self.octants.is_none() {
+                self.grow()
+            }
+
+        }
+
+    }
 }
+
+// // compute the near and far intersections of the cube (stored in the x and y components) using the slab method
+// // no intersection means vec.x > vec.y (really tNear > tFar)
+// vec2 intersectAABB(vec3 rayOrigin, vec3 rayDir, vec3 boxMin, vec3 boxMax) {
+//     vec3 tMin = (boxMin - rayOrigin) / rayDir;
+//     vec3 tMax = (boxMax - rayOrigin) / rayDir;
+//     vec3 t1 = min(tMin, tMax);
+//     vec3 t2 = max(tMin, tMax);
+//     float tNear = max(max(t1.x, t1.y), t1.z);
+//     float tFar = min(min(t2.x, t2.y), t2.z);
+//     return vec2(tNear, tFar);
+// };
 
 // Private functions
 #[allow(dead_code)]
