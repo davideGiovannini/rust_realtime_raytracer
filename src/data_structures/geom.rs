@@ -136,6 +136,16 @@ impl Ray {
         self.sign_is_positive[1] = inv_dir.y.is_sign_positive();
         self.sign_is_positive[2] = inv_dir.z.is_sign_positive();
     }
+
+    pub fn change_direction(&mut self, direction: Vector) {
+        self.direction = direction;
+        let inv_dir = Vector3::new(1.0 / direction.x, 1.0 / direction.y, 1.0 / direction.z);
+        self.inv_direction = inv_dir;
+
+        self.sign_is_positive[0] = inv_dir.x.is_sign_positive();
+        self.sign_is_positive[1] = inv_dir.y.is_sign_positive();
+        self.sign_is_positive[2] = inv_dir.z.is_sign_positive();
+    }
     pub fn get_origin(&self) -> Vector {
         self.origin.clone()
     }

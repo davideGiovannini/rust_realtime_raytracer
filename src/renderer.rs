@@ -1,11 +1,12 @@
-use data_structures::geom::*;
 
 
 use sdl2_sys::render;
 use sdl2::render::{Renderer, Texture};
 use sdl2::pixels::PixelFormatEnum;
 use std::ptr;
-use data_structures::octree::Octree;
+use data_structures::{Octree, Camera};
+
+
 
 pub const WIDTH: usize = 800;
 pub const HEIGHT: usize = 600;
@@ -28,7 +29,7 @@ impl<'a> RaycasterRenderer<'a> {
         }
     }
 
-    pub fn render_frame(&mut self, octree: &Octree, ray_matrix: &Vec<Vec<Ray>>) {
+    pub fn render_frame(&mut self, octree: &Octree, camera: &Camera) {
 
         unsafe {
             let sdl_texture = self.framebuffer.raw();
@@ -42,16 +43,18 @@ impl<'a> RaycasterRenderer<'a> {
             let mut pixel_color: u32;
 
             for row in 0..HEIGHT {
-                let mut dst = pixels.offset(row as isize * pitch as isize);
+                let mut dst = pixels.offset(((HEIGHT - 1) - row) as isize * pitch as isize);
 
                 for col in 0..WIDTH {
 
-                    if let Some(data) =
-                           octree.raycast(&ray_matrix[HEIGHT - 1 - row][col], 0.0, 100.0) {
+                    if let Some(data) = octree.raycast(&camera.ray_for(col as f64 / WIDTH as f64,
+                                                                       row as f64 /
+                                                                       HEIGHT as f64),
+                                                       0.0,
+                                                       100.0) {
                         pixel_color = data.color;
                     } else {
-                        pixel_color = 0xFF000000 | (0 << 16) | (228 << 8) | 155 << 0;
-
+                        pixel_color = 0xFF101010;//| (0 << 16) | (228 << 8) | 155 << 0;
                     }
 
                     ptr::write(dst as *mut u32, pixel_color);

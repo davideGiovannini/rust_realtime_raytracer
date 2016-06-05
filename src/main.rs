@@ -2,6 +2,7 @@ extern crate sdl2;
 extern crate sdl2_sys;
 extern crate cgmath;
 extern crate libc;
+extern crate rand;
 
 mod renderer;
 mod data_structures;
@@ -13,11 +14,11 @@ use sdl2::pixels::Color::RGB;
 use std::time::Instant;
 
 use renderer::*;
-use data_structures::octree::Octree;
-use data_structures::voxel::VoxelData;
+use data_structures::*;
 use data_structures::geom::*;
 
 const WINDOW_TITLE: &'static str = "Voxel Experiments";
+
 
 
 pub fn main() {
@@ -29,37 +30,31 @@ pub fn main() {
         .build()
         .unwrap();
 
-    let mut renderer = window.renderer().build().unwrap();
+    let mut renderer = window.renderer().accelerated().build().unwrap();
 
     renderer.set_logical_size(WIDTH as u32, HEIGHT as u32).ok();
-    renderer.set_draw_color(RGB(10, 30, 90));
+    renderer.set_draw_color(RGB(10, 30, 30));
     renderer.clear();
 
+    sdl_context.mouse().set_relative_mouse_mode(true);
 
     println!("Initialized window at {},{}", WIDTH, HEIGHT);
 
-
+    let mut camera = Camera::new(Vector::new(4.0, 0.0, 1.0), 1, 1, 0.5);
     let mut raycaster_renderer = RaycasterRenderer::new(&renderer);
 
 
     // DATA
 
-    let mut ray_matrix: Vec<Vec<Ray>> = Vec::with_capacity(HEIGHT);
-    for y in 0..HEIGHT {
-        ray_matrix.push(Vec::with_capacity(WIDTH));
-        for x in 0..WIDTH {
-            let cx = (x as f64 / WIDTH as f64) * 8.0;
-            let cy = (y as f64 / HEIGHT as f64) * 6.0;
-            ray_matrix[y].push(Ray::new(Vector::new(cx, cy + 1.0, -2.0),
-                                        Vector::new(-0.3, -0.3, 0.3)));
-        }
-    }
-    let mut octree = Octree::new(zero3(), 10.0);
+    let mut octree = Octree::new(zero3(), 100.0);
 
-    octree.add_voxel(VoxelData::new(zero3(), 1.0, 1.0, 1.0, 0xFF_FF_FF_FF));
-    octree.add_voxel(VoxelData::new(Vector::new(2.0, 2.0, 0.0), 1.0, 2.0, 1.0, 0xFF_FF_A0_10));
+    octree.add_voxel(VoxelData::new(Vector::new(2.5, 0.5, 5.5), 1.0, 1.0, 1.0, 0xFF_FF_00_00));
+    octree.add_voxel(VoxelData::new(Vector::new(3.5, 4.5, 11.0), 1.0, 3.0, 2.0, 0xFF_00_FF_00));
+    octree.add_voxel(VoxelData::new(Vector::new(5.5, 2.0, 7.0), 2.0, 2.0, 2.0, 0xFF_00_00_FF));
 
-    octree.add_voxel(VoxelData::new(Vector::new(4.0, 1.0, 0.0), 0.5, 0.5, 0.5, 0xFF_F0_10_C0));
+    octree.add_voxel(VoxelData::new(Vector::new(4.0, 0.0, -3.0), 2.0, 2.0, 2.0, 0xFF_00_FF_FF));
+    octree.add_voxel(VoxelData::new(Vector::new(4.5, 4.0, 1.0), 2.0, 2.0, 2.0, 0xFF_FF_00_FF));
+    octree.add_voxel(VoxelData::new(Vector::new(4.5, -4.0, 1.0), 2.0, 2.0, 2.0, 0xFF_FF_FF_00));
     // _DATA
 
 
@@ -74,12 +69,31 @@ pub fn main() {
             match event {
                 Event::Quit { .. } |
                 Event::KeyDown { keycode: Some(Keycode::Escape), .. } => break 'running,
+                Event::KeyDown { keycode: Some(Keycode::A), .. } => {
+                    camera.position -= camera.right_for(0.1)
+                }
+                Event::KeyDown { keycode: Some(Keycode::S), .. } => {
+                    camera.position -= camera.direction_for(0.1)
+                }
+                Event::KeyDown { keycode: Some(Keycode::W), .. } => {
+                    camera.position += camera.direction_for(0.1)
+                }
+                Event::KeyDown { keycode: Some(Keycode::D), .. } => {
+                    camera.position += camera.right_for(0.1)
+                }
+                Event::KeyDown { keycode: Some(Keycode::Q), .. } => {
+                    camera.position += Vector::new(0.0, -0.1, 0.0)
+                }
+                Event::KeyDown { keycode: Some(Keycode::Space), .. } => {
+                    camera.position += Vector::new(0.0, 0.1, 0.0)
+                }
+                Event::MouseMotion { xrel, yrel, .. } => camera.update_with_mouse(xrel, yrel),
                 _ => {}
             }
         }
         // The rest of the game loop goes here...
 
-        raycaster_renderer.render_frame(&octree, &ray_matrix);
+        raycaster_renderer.render_frame(&octree, &camera);
 
         frames += 1;
         if last_frame.elapsed().as_secs() > 0 {

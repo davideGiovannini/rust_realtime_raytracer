@@ -9,7 +9,7 @@ const DEFAULT_BUCKET_SIZE: usize = 8;
 
 #[derive(Debug)]
 pub struct Octree {
-    bounding_box: BoundingBox,
+    pub bounding_box: BoundingBox,
     bucket_size: usize,
     octants: Option<[Box<Octree>; 8]>,
     bucket: Vec<VoxelData>,
