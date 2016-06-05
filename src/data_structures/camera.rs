@@ -22,8 +22,8 @@ impl Camera {
             position: position,
             width: width,
             height: height,
-            pitch: 30.0,
-            yaw: 120.0,
+            pitch: 0.0,
+            yaw: 0.0,
             sensitivity: sensitivity,
             quaternion: Quaternion::one(),
         }
