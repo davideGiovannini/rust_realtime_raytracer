@@ -2,6 +2,7 @@
 
 use sdl2_sys::render;
 use sdl2::render::{Renderer, Texture};
+use sdl2::rect::Rect;
 use sdl2::pixels::PixelFormatEnum;
 use std::ptr;
 use data_structures::{Octree, Camera};
@@ -33,7 +34,10 @@ impl<'a> RaycasterRenderer<'a> {
         }
     }
 
-    pub fn render_frame(&mut self, octree: &Octree, camera: &Camera) {
+    pub fn render_frame(&mut self,
+                        octree: &Octree,
+                        camera: &Camera,
+                        debug_fps: &Option<(&Texture, &Rect)>) {
 
         unsafe {
             let sdl_texture = self.framebuffer.raw();
@@ -75,6 +79,9 @@ impl<'a> RaycasterRenderer<'a> {
             // //Render frame
             render::SDL_RenderCopy(sdl_renderer, sdl_texture, ptr::null(), ptr::null());
             // gStreamingTexture.render( ( SCREEN_WIDTH - gStreamingTexture.getWidth() ) / 2, ( SCREEN_HEIGHT - gStreamingTexture.getHeight() ) / 2 );
+            if let Some((fps, rect)) = *debug_fps {
+                render::SDL_RenderCopy(sdl_renderer, fps.raw(), ptr::null(), rect.raw());
+            }
             // //Update screen
             render::SDL_RenderPresent(sdl_renderer);
         }

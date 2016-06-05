@@ -1,4 +1,5 @@
 extern crate sdl2;
+extern crate sdl2_ttf;
 extern crate sdl2_sys;
 extern crate cgmath;
 extern crate libc;
@@ -11,8 +12,12 @@ mod data_structures;
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use sdl2::pixels::Color::RGB;
+use sdl2::pixels::Color;
+use sdl2::rect::Rect;
 
 use std::time::Instant;
+
+use std::path::Path;
 
 use renderer::*;
 use data_structures::*;
@@ -25,6 +30,7 @@ const WINDOW_TITLE: &'static str = "Voxel Experiments";
 pub fn main() {
     let sdl_context = sdl2::init().unwrap();
     let video_subsystem = sdl_context.video().unwrap();
+    let ttf_context = ::sdl2_ttf::init().unwrap();
 
     let window = video_subsystem.window(WINDOW_TITLE, WIDTH as u32, HEIGHT as u32)
         .fullscreen_desktop()
@@ -45,6 +51,16 @@ pub fn main() {
     let mut raycaster_renderer = RaycasterRenderer::new(&renderer);
 
 
+    // Load a font
+    let mut font = ttf_context.load_font(&Path::new("assets/open-sans-bold.ttf"), 128).unwrap();
+    font.set_style(sdl2_ttf::STYLE_BOLD);
+
+    // render a surface, and convert it to a texture bound to the renderer
+    let surface = font.render("Hello Rust!")
+        .blended(Color::RGBA(255, 255, 255, 55))
+        .unwrap();
+    let mut texture = renderer.create_texture_from_surface(&surface).unwrap();
+    let fps_rect = Rect::new(0, 0, 100, 75);
     // DATA
 
     let mut octree = Octree::new(zero3(), 100.0);
@@ -94,11 +110,17 @@ pub fn main() {
         }
         // The rest of the game loop goes here...
 
-        raycaster_renderer.render_frame(&octree, &camera);
+
+        raycaster_renderer.render_frame(&octree, &camera, &Some((&texture, &fps_rect)));
 
         frames += 1;
         if last_frame.elapsed().as_secs() > 0 {
             println!("FPS {}", frames);
+            texture = renderer.create_texture_from_surface(&font.render(&format!("FPS: {}", frames))
+                    .blended(Color::RGBA(255, 255, 255, 55))
+                    .unwrap())
+                .unwrap();
+
             last_frame = Instant::now();
             frames = 0;
         }
