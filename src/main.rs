@@ -3,6 +3,7 @@ extern crate sdl2_sys;
 extern crate cgmath;
 extern crate libc;
 extern crate rand;
+extern crate scoped_threadpool;
 
 mod renderer;
 mod data_structures;

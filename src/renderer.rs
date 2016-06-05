@@ -6,7 +6,9 @@ use sdl2::pixels::PixelFormatEnum;
 use std::ptr;
 use data_structures::{Octree, Camera};
 
+use scoped_threadpool::Pool;
 
+static N_THREADS: u32 = 10;
 
 pub const WIDTH: usize = 800;
 pub const HEIGHT: usize = 600;
@@ -16,6 +18,7 @@ pub const HEIGHT: usize = 600;
 pub struct RaycasterRenderer<'a> {
     renderer: &'a Renderer<'a>,
     framebuffer: Texture,
+    threadpool: Pool,
 }
 
 
@@ -26,6 +29,7 @@ impl<'a> RaycasterRenderer<'a> {
         RaycasterRenderer {
             renderer: renderer,
             framebuffer: texture,
+            threadpool: Pool::new(N_THREADS),
         }
     }
 
@@ -40,27 +44,30 @@ impl<'a> RaycasterRenderer<'a> {
 
             render::SDL_LockTexture(sdl_texture, ptr::null(), &mut pixels, &mut pitch);
 
-            let mut pixel_color: u32;
 
-            for row in 0..HEIGHT {
-                let mut dst = pixels.offset(((HEIGHT - 1) - row) as isize * pitch as isize);
+            self.threadpool.scoped(|scope| {
+                for row in 0..HEIGHT {
+                    let dst = pixels.offset(((HEIGHT - 1) - row) as isize * pitch as isize);
 
-                for col in 0..WIDTH {
+                    let slice = ::std::slice::from_raw_parts_mut(dst as *mut u32, WIDTH);
+                    scope.execute(move || {
+                        let mut pixel_color: u32;
+                        for col in 0..WIDTH {
 
-                    if let Some(data) = octree.raycast(&camera.ray_for(col as f64 / WIDTH as f64,
-                                                                       row as f64 /
-                                                                       HEIGHT as f64),
-                                                       0.0,
-                                                       100.0) {
-                        pixel_color = data.color;
-                    } else {
-                        pixel_color = 0xFF101010;//| (0 << 16) | (228 << 8) | 155 << 0;
-                    }
-
-                    ptr::write(dst as *mut u32, pixel_color);
-                    dst = dst.offset(4);
+                            if let Some(data) =
+                                   octree.raycast(&camera.ray_for(col as f64 / WIDTH as f64,
+                                                                  row as f64 / HEIGHT as f64),
+                                                  0.0,
+                                                  100.0) {
+                                pixel_color = data.color;
+                            } else {
+                                pixel_color = 0xFF101010;
+                            }
+                            slice[col] = pixel_color;
+                        }
+                    });
                 }
-            }
+            });
             render::SDL_UnlockTexture(sdl_texture);
 
             render::SDL_RenderClear(sdl_renderer);
